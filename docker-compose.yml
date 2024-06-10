@@ -1,0 +1,51 @@
+services:
+    postgres_minishop_source:
+        hostname: postgres_minishop_source
+        container_name: postgres_minishop_container
+        image: 'postgres:latest'
+        restart: on-failure
+        environment:
+            - POSTGRES_DB=minishop_src
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=cobapassword
+        volumes:
+            - ./src/init.sql:/docker-entrypoint-initdb.d/init.sql
+        ports:
+            - 5433:5432
+        networks:
+            - minishop-network
+
+    postgres_minishop_dwh:
+        hostname: postgres_minishop_dwh
+        container_name: postgres_minishop_dwh_container
+        image: 'postgres:latest'
+        restart: on-failure
+        environment:
+            - POSTGRES_DB=minishop_dwh
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=cobapassword
+        volumes:
+            - ./dwh/init.sql:/docker-entrypoint-initdb.d/init.sql
+        ports:
+            - 5434:5432
+        networks:
+            - minishop-network
+
+    metabase:
+        hostname: metabase
+        container_name: metabase_container
+        image: 'metabase/metabase:latest'
+        restart: on-failure
+        ports:
+            - 3000:3000
+        healthcheck:
+            test: curl --fail -I http://localhost:3000/api/health || exit 1
+            interval: "15s"
+            timeout: "5s"
+            retries: 5
+        networks:
+            - minishop-network
+
+networks:
+    minishop-network:
+        driver: bridge
